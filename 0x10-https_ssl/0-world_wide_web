@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
-# website
-if [ $# -eq 0 ]; then
-    exit
-fi
-sites=("www" "lb-01" "web-01" "web-02")
-if [ "$2" ]
-then
-    sites=("$2")
-fi
-for i in "${sites[@]}"
+# shellcheck disable=SC2086
+# display information about subdomains
+
+display_info ()
+{
+    domain="$1"
+    subdomain="$2"
+    dig "$subdomain.$domain" | awk '/ANSWER SECTION:/{getline; printf "The subdomain %s is a %s record and points to %s\n", var, $4, $5}' var="$subdomain"
+}
+
+for subdomain in "www" "lb-01" "web-01" "web-02"
 do
-    first="$(dig $i."$1" | grep -A1 'ANSWER SECTION:'| tail -1 | awk '{print $1}'|cut -d '.' -f1)"
-    second="$(dig $i."$1" | grep -A1 'ANSWER SECTION:'| tail -1 | awk '{print $4}')"
-    third="$(dig $i."$1" | grep -A1 'ANSWER SECTION:'| tail -1 | awk '{print $5}')"
-    echo "The subdomain $first is a $second record and points to $third"
+    if [ -z "$2" ] || [ "$2" == "$subdomain" ] ;
+    then
+	display_info "$1" "$subdomain"
+    fi
 done
